@@ -39,5 +39,5 @@ for index, image in enumerate(st.session_state.images):
 
 if st.button("Load More"):
     breed_id = breeds.get(selected_breed) if selected_breed != "All" else None
-    st.session_state.images = fetch_cat_images(breed_id=breed_id)  
-    st.experimental_rerun()
+    st.session_state.images = fetch_cat_images(breed_id=breed_id)
+    st.rerun() 

@@ -1,24 +1,47 @@
 import streamlit as st
 import requests
 
-API_URL = "https://api.thecatapi.com/v1/images/search?limit=9"
+# The Cat API details
+API_URL = "https://api.thecatapi.com/v1/images/search"
+BREEDS_URL = "https://api.thecatapi.com/v1/breeds"
 
-def fetch_cat_images():
-    response = requests.get(API_URL)
+st.title("🐱 Random Cat Images Gallery")
+
+# Function to fetch breeds
+@st.cache_data
+def get_breeds():
+    response = requests.get(BREEDS_URL)
+    if response.status_code == 200:
+        breeds = response.json()
+        return {breed["name"]: breed["id"] for breed in breeds}
+    return {}
+
+# Function to fetch cat images
+def fetch_cat_images(limit=9, breed_id=None):
+    params = {"limit": limit}
+    if breed_id:
+        params["breed_ids"] = breed_id
+    response = requests.get(API_URL, params=params)
     if response.status_code == 200:
         return [img["url"] for img in response.json()]
     return []
 
-st.title("🐱 Random Cat Gallery")
+# Load breeds
+breeds = get_breeds()
+selected_breed = st.selectbox("Filter by breed:", ["All"] + list(breeds.keys()))
 
+# Fetch initial cat images
 if "images" not in st.session_state:
     st.session_state.images = fetch_cat_images()
 
+# Display images in a grid
 cols = st.columns(3)
 for index, image in enumerate(st.session_state.images):
     with cols[index % 3]:
         st.image(image, use_column_width=True)
 
+# Load More / Refresh button
 if st.button("Load More"):
-    st.session_state.images = fetch_cat_images()
+    breed_id = breeds.get(selected_breed) if selected_breed != "All" else None
+    st.session_state.images = fetch_cat_images(breed_id=breed_id)
     st.experimental_rerun()
